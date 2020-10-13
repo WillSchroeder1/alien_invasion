@@ -2,6 +2,7 @@ import sys      #Used to exit the game when the player quits.
 import pygame       #Used to build the game
 from settings import Settings
 from ship import Ship
+from bullet import Bullet
 
 class AlienInvasion:
     """Overall class to manage game assets and behavor."""
@@ -15,6 +16,7 @@ class AlienInvasion:
         pygame.display.set_caption("Alien Invasion")        #
 
         self.ship = Ship(self)
+        self.bullets = pygame.sprite.Group()
 
         #Set the background color
         self.bg_color = (230,230,230)       #RGB
@@ -24,6 +26,7 @@ class AlienInvasion:
         while True:         #runs continuously waiting for an event (user input)
             self._check_events()
             self.ship.update()
+            self._update_bullets()
             self._update_screen()
             # watch for keyboard and mouse events
 
@@ -46,6 +49,8 @@ class AlienInvasion:
             self.ship.moving_left = True
         elif event.key == pygame.K_q:
             sys.exit()
+        elif event.key == pygame.K_SPACE:
+            self._fire_bullet()
 
     def _check_keyup_events(self, event):
         """Respond to Key releases"""
@@ -54,12 +59,29 @@ class AlienInvasion:
         elif event.key == pygame.K_LEFT:
             self.ship.moving_left = False
 
+    def _fire_bullet(self):
+        """Create a new bullet and add it to the bullets group."""
+        if len(self.bullets) < self.settings.bullets_allowed:
+            new_bullet = Bullet(self)
+            self.bullets.add(new_bullet)
 
+    def _update_bullets(self):
+        """Update position of bullets and get rid of old bullets"""
+        #Update bullet positions.
+        self.bullets.update()       #updates each bullet
+            
+             #Get rid of bullets that disappear
+        for bullet in self.bullets.copy():      #Use copy b/c for py expects lists to stay the same length
+            if bullet.rect.bottom <= 0:
+                self.bullets.remove(bullet)
+        
     def _update_screen(self):
         """Update images on the screen, and flip to the new screen"""
         #Redraw the screen during each pass through the loop.
         self.screen.fill(self.settings.bg_color)     #.fill fills the background w the desired color
         self.ship.blitme()
+        for bullet in self.bullets.sprites():
+            bullet.draw_bullet()
 
             #Make the most recently drawn screen visibile.
         pygame.display.flip()
